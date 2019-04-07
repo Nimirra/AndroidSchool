@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Модуль1</string>
+    <string name="field_1">Число 1</string>
+    <string name="field_2">Число 2</string>
+    <string name="operation_1">Плюс</string>
+    <string name="operation_2">Минус</string>
+    <string name="operation_3">Делить</string>
+    <string name="operation_4">Умножить</string>
+    <string name="float_values">Использовать дробные числа</string>
+    <string name="signed_values">Использовать знаковые числа</string>
+    <string name="result_field">Результат</string>
+    <string name="calculate_button">Вычислить</string>
+    <string name="operation_not_found_message">Выберите выполняемую операцию</string>
+    <string name="clear">Очистить поля</string>
+    <string name="arithmeticException">Делить на ноль нельзя</string>
+</resources>
