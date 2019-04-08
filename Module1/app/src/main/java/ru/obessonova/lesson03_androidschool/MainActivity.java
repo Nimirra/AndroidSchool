@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -32,8 +33,7 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     float number2;
     float resultFloat;
 
-    boolean floatIsChecked;
-    boolean signedIsChecked;
+    final static String RESULT = "result";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,15 +53,49 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
         calculateButton = findViewById(R.id.calculateButton);
 
         if (savedInstanceState != null) {
-            field1.setText(savedInstanceState.getString("field1"));
-            field2.setText(savedInstanceState.getString("field2"));
-            resultField.setText(savedInstanceState.getString("result"));
-            floatIsChecked = savedInstanceState.getBoolean("floatChecked", floatIsChecked);
-            signedIsChecked = savedInstanceState.getBoolean("signedIsChecked", signedIsChecked);
+            resultField.setText(savedInstanceState.getString(RESULT));
         }
 
         operations.setOnCheckedChangeListener(this);
         operations2.setOnCheckedChangeListener(this);
+
+        //при снятии и повторной установке любого чекбокса клавиатура становится обычной,
+        //при снятии - снова цифровой (даже не TYPE_CLASS_NUMBER)
+        floatValues.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    field1.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                    field2.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                } else {
+                    if (signedValues.isChecked()) {
+                        field1.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+                        field2.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    } else {
+                        field1.setInputType(InputType.TYPE_CLASS_NUMBER);
+                        field2.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    }
+                }
+            }
+        });
+
+        signedValues.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    field1.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    field2.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
+                } else {
+                    if (floatValues.isChecked()) {
+                        field1.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+                        field2.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    } else {
+                        field1.setInputType(InputType.TYPE_CLASS_NUMBER);
+                        field2.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -85,37 +119,38 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
 
     @Override
     public void onCheckedChanged(RadioGroup group, int checkedId) {
-        //не срабатывает проверка - все радиобаттон при запуске этого кода неактивны
-      /*  if (group == operations) {
+        if (group.getId() == operations.getId()) {
+            operations2.setOnCheckedChangeListener(null);
             operations2.clearCheck();
+            operations2.setOnCheckedChangeListener(this);
         } else {
+            operations.setOnCheckedChangeListener(null);
             operations.clearCheck();
-        }*/
+            operations.setOnCheckedChangeListener(this);
+        }
 
         if (field1.getText().toString().length() > 0 && field2.getText().toString().length() > 0) {
             number1 = Float.parseFloat(field1.getText().toString());
             number2 = Float.parseFloat(field2.getText().toString());
         }
-        //не срабатывает обработка исключений, в поле resultField в случае деления на ноль выводится infinity
-        try {
-            switch (checkedId) {
-                case R.id.plus:
-                    resultFloat = number1 + number2;
-                    break;
-                case R.id.minus:
-                    resultFloat = number1 - number2;
-                    break;
-                case R.id.divide:
+        switch (checkedId) {
+            case R.id.plus:
+                resultFloat = number1 + number2;
+                break;
+            case R.id.minus:
+                resultFloat = number1 - number2;
+                break;
+            case R.id.divide:
+                if (number2 == 0) {
+                    resultField.setText(R.string.arithmeticException);
+                } else {
                     resultFloat = number1 / number2;
-                    break;
-                case R.id.multiple:
-                    resultFloat = number1 * number2;
-                    break;
-            }
-        } catch (Exception e) {
-            resultField.setText(e.toString());
+                }
+                break;
+            case R.id.multiple:
+                resultFloat = number1 * number2;
+                break;
         }
-
     }
 
     public void calculate(View view) {
@@ -130,44 +165,7 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putString("field1", field1.getText().toString());
-        savedInstanceState.putString("field2", field2.getText().toString());
-        savedInstanceState.putString("result", resultField.getText().toString());
-        savedInstanceState.putBoolean("floatChecked", floatIsChecked);
-        savedInstanceState.putBoolean("signedIsChecked", signedIsChecked);
-    }
+        savedInstanceState.putString(RESULT, resultField.getText().toString());
 
-    /*при снятии чекбоксов и повторной их установке появляется обычная клавиатура,
-    при снятии одного чекбокса программно снимаются оба
-     */
-    public void checkFloatClicked(View view) {
-        floatIsChecked = ((CheckBox) view).isChecked();
-        if (floatIsChecked) {
-            field1.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
-            field2.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        } else {
-            if (signedValues.isChecked()) {
-                field1.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
-                field2.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
-            }
-            field1.setInputType(InputType.TYPE_CLASS_NUMBER);
-            field2.setInputType(InputType.TYPE_CLASS_NUMBER);
-        }
-    }
-
-
-    public void checkSignedClicked(View view) {
-        signedIsChecked = ((CheckBox) view).isChecked();
-        if (signedIsChecked) {
-            field1.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
-            field2.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
-        } else {
-            if (floatValues.isChecked()) {
-                field1.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
-                field2.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
-            }
-            field1.setInputType(InputType.TYPE_CLASS_NUMBER);
-            field2.setInputType(InputType.TYPE_CLASS_NUMBER);
-        }
     }
 }
